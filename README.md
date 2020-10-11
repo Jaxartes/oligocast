@@ -32,9 +32,9 @@ To use oligocast:
   "-i" for the network interface name.
 
 Examples:
-* oligocast -tiwlan0 -g224.2.2.2
-* oligocast -r -iwlan0 -gff15::33
-* oligocast -rviotn3v1 -le32 -gff15::ff -Efd96:1::3,fd96:1::2
+* `oligocast -tiwlan0 -g224.2.2.2`
+* `oligocast -r -iwlan0 -gff15::33`
+* `oligocast -rviotn3v1 -le32 -gff15::ff -Efd96:1::3,fd96:1::2`
 
 ## Other comments
 
