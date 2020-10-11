@@ -57,6 +57,8 @@ There is much to be done on this project:
 * Once a manual page is written, trim down `usage()`, which is way too long,
   down to just a list of options.
 * Go through the code for places `errthrottle()` should be used.
+* Maybe #ifdef all the IPv6-specific code, for building on systems
+  where IPv6 multicast is missing or badly broken.
 * Potential feature: When receiving a packet, report the source address.
 * Potential feature: When receiving a packet, optionally
   check its contents against "-d".
