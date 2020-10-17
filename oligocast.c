@@ -831,7 +831,7 @@ static enum command_action command(struct config *cfg, int fd)
     for (pos = 0; pos < l && isspace(cfg->cfg_command_buf[pos]); ++pos)
         ;
     cmd = malloc(l - pos + 1);
-    memcpy(cmd, &cfg->cfg_command_buf[0], l - pos);
+    memcpy(cmd, &cfg->cfg_command_buf[pos], l - pos);
     cmd[l - pos] = '\0';
     if (l < cfg->cfg_command_got) {
         ++l; /* clobber the newline at the end */
