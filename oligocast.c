@@ -121,7 +121,7 @@ struct config {
     char                    cfg_command_buf[512]; /* partial commands read */
     int                     cfg_command_got;/* bytes in cfg_command_buf[] */
     int                     cfg_command_ignore; /* ignore command */
-    void *                  cfg_sml_arb;    /* for setup_mcast_listen() */
+    struct oligocast_sml_state cfg_sml_state; /* for setup_mcast_listen() */
 };
 
 enum command_action {
@@ -1624,7 +1624,6 @@ int main(int argc, char **argv)
     socklen_t alen, dstalen;
     fd_set rfds;
     long tflat;
-    int first_joining = 1;
 
     /* figure out program name & what it implies as to functionality */
     if (argc > 0) {
@@ -1672,7 +1671,7 @@ int main(int argc, char **argv)
     main_cfg.cfg_osources = calloc(1, sizeof(main_cfg.cfg_osources[0]));
     main_cfg.cfg_onsources = 0;
 #endif /* DO_SOURCES */
-    main_cfg.cfg_sml_arb = NULL;
+    main_cfg.cfg_sml_state.ever_called = 0;
 
     gettimeofday(&tnow, NULL);
     tlast = tnow;
@@ -1898,8 +1897,7 @@ int main(int argc, char **argv)
                                     cfg->cfg_sfmode, cfg->cfg_nsources,
                                     cfg->cfg_sources,
 #endif /* DO_SOURCES */
-                                    &cfg->cfg_sml_arb,
-                                    first_joining);
+                                    &cfg->cfg_sml_state);
             if (rv < 0) {
                 errout("filter setting failed: %s", strerror(errno));
 #ifdef DO_SOURCES
@@ -1924,8 +1922,6 @@ int main(int argc, char **argv)
                 /* no tricky retries when we can't even join the group */
                 exit(1);
 #endif /* !DO_SOURCES */
-            } else {
-                first_joining = 0;
             }
         }
 

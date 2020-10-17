@@ -84,11 +84,10 @@
  *      fmode -- filter mode MCAST_INCLUDE or MCAST_EXCLUDE
  *      numsrc -- number of source addresses in slist[]
  *      slist -- source addresses to include/exclude depending on fmode
- *      arb -- pointer to a little arbitrary storage within the configuration
- *          structure, that setup_mcast_listen() can use, if needed, for
- *          storing state
- *      first_joining -- nonzero if this is the first time we're doing anything
- *          on this particular multicast group on this particular socket
+ *      state -- A structure that holds any data that setup_mcast_listen()
+ *          needs to retain from one call to another.  The caller will
+ *          allocate it and keep it around, but won't do anything else except
+ *          initialize 'state->ever_called' to 0.
  * Return value:
  *      >=0 on success
  *      <0 on error, and errno is set
@@ -99,18 +98,29 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
                        uint32_t fmode,
                        int numsrc, struct sockaddr_storage *sources,
 #endif
-                       void **arb, int first_joining)
+                       struct oligocast_sml_state *state)
 {
     int rv = 0;
 
-#ifndef DO_SOURCES
-    if (!first_joining) {
-        /* without source filtering, joining is all there is to do */
+    if (!state->ever_called) {
+        /* initialize the state structure */
+        state->ever_called = 1;
+        state->joined = 0;
+    }
+
+#ifdef DO_SOURCES
+    if (fmode == MCAST_INCLUDE && numsrc == 0 && !state->joined) {
+        /* we haven't joined the group and don't want to */
         return(0);
     }
-#endif /* DO_SOURCES */
+#else /* DO_SOURCES */
+    if (state->joined) {
+        /* joining is all we want to do and we've done it */
+        return(0);
+    }
+#endif /* !DO_SOURCES */
 #if !defined(DO_SOURCES) || defined(NEED_MEMBERSHIP_FIRST)
-    if (first_joining) {
+    if (!state->joined) {
         /* 
          * Use a socket option to join the group. What's available for this?
          *      For IPv4:
@@ -151,6 +161,7 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
                             &imr, sizeof(imr));
             if (rv) { return(rv); }
         }
+        state->joined = 1;
     }
 #endif /* DO_SOURCES || NEED_MEMBERSHIP_FIRST */
 #ifdef DO_SOURCES
@@ -169,6 +180,13 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
      */
 #error "not implemented"
 #endif /* !HAVE_SETSOURCEFILTER */
+    if (fmode == MCAST_INCLUDE && numsrc == 0) {
+        /*
+         * At least on Linux, this causes us to leave the group.  So
+         * remember to rejoin it.
+         */
+        state->joined = 0;
+    }
 #endif /* !DO_SOURCES */
 
     return(0);

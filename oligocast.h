@@ -41,6 +41,14 @@ struct oligocast_if {
     struct in_addr  adr;                /* interface address */
 };
 
+struct oligocast_sml_state {
+    /*
+     * State information which is stored for setup_mcast_listen().
+     */
+    int             ever_called;        /* nonzero if setup_mcast_listen() ran*/
+    int             joined;             /* nonzero if we've joined the group */
+};
+
 /* functions in oligocast.c */
 
 /* functions in oligocast_compat.c */
@@ -52,5 +60,5 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
                        uint32_t fmode,
                        int numsrc, struct sockaddr_storage *sources,
 #endif /* DO_SOURCES */
-                       void **arb, int first_time);
+                       struct oligocast_sml_state *st);
 
