@@ -442,7 +442,7 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
             return(command_action_error);
         }
         f = atof(arg);
-        if (!(f >= 1.1 || f <= 10.0)) {
+        if (!(f >= 1.1 && f <= 10.0)) {
             errout("-m multiplier must be in range 1.1-10");
             return(command_action_error);
         }

@@ -81,7 +81,7 @@
 /*
  * There's some logic below to try to autodetect what platform you're
  * compiling for, and determine what it has, but it's very basic.
- * When in doubt, edit the #defines below to suit the reality of
+ * If you have trouble, edit the #defines below to suit the reality of
  * what you've got.
  */
 
