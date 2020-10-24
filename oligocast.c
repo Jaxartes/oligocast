@@ -249,12 +249,12 @@ static void usage(void)
             "    #\n"
             "        comment; ignore the whole line\n"
 #ifdef DO_SOURCES
-            "    -E, -I, -v, -l, -f, -P%s, -d, -C\n"
+            "    -E, -I, -v, -l, -f, -P%s, -d\n"
 #else
-            "    -v, -l, -f, -P%s, -d, -C\n"
+            "    -v, -l, -f, -P%s, -d\n"
 #endif /* DO_SOURCES */
             "        same as the command line options\n"
-            "    +v, +C, +k\n"
+            "    +v, +k\n"
             "        opposites of the command line options\n"
             "    .x\n"
             "        terminate the program\n",
