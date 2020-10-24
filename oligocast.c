@@ -155,6 +155,7 @@ static void emit(struct config *cfg, enum reported_events evt, char *extra);
 static int auto_pton(char *s, struct sockaddr_storage *ss,
                      socklen_t *sslen, struct config *cfg);
 static char *auto_ntop(void *src, char *dst, socklen_t size);
+#ifdef DO_SOURCES
 static void sort_addrs(struct sockaddr_storage *addrs, int naddrs);
 static int sort_addrs_compare(const void *x, const void *y);
 static void add_addrs(struct sockaddr_storage **res_addrs, int *res_naddrs,
@@ -163,6 +164,7 @@ static void add_addrs(struct sockaddr_storage **res_addrs, int *res_naddrs,
 static void sub_addrs(struct sockaddr_storage **res_addrs, int *res_naddrs,
                       struct sockaddr_storage *inc_addrs, int inc_naddrs,
                       struct sockaddr_storage *exc_addrs, int exc_naddrs);
+#endif /* DO_SOURCES */
 static int timestamp_log(struct timeval *tv, char *buf, size_t len, void *arg);
 static int timestamp_raw(struct timeval *tv, char *buf, size_t len, void *arg);
 static int timestamp_num(struct timeval *tv, char *buf, size_t len, void *arg);
@@ -962,7 +964,9 @@ static char *make_default_label(struct config *cfg)
 static void group_check(struct config *cfg, int first_time)
 {
     char gbuf[128];
+#ifdef DO_SOURCES
     int ssm_group, ssm_filter;
+#endif /* DO_SOURCES */
 
     if (first_time) {
         if (cfg->cfg_grp.ss_family == AF_INET6) {
@@ -1295,6 +1299,7 @@ static char *auto_ntop(void *src, char *dst, socklen_t size)
     return(dst);
 }
 
+#ifdef DO_SOURCES
 /*
  * sort_addrs()
  *
@@ -1468,6 +1473,7 @@ static void sub_addrs(struct sockaddr_storage **res_addrs, int *res_naddrs,
     }
     *res_naddrs = o;
 }
+#endif /* DO_SOURCES */
 
 /*
  * csv_escape()
