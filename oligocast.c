@@ -339,7 +339,11 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'g': /* -g option on command line: specify the multicast group */
-        if (cfg->cfg_grp.ss_family != AF_UNSPEC || pc != 0) {
+        if (pc != 0) {
+            errout("-g may only appear on the command line");
+            return(command_action_error);
+        }
+        if (cfg->cfg_grp.ss_family != AF_UNSPEC) {
             errout("-g may not be used more than once");
             return(command_action_error);
         }
@@ -350,7 +354,11 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'p': /* -p option on command line: specify the UDP port number */
-        if (cfg->cfg_port != 0 || pc != 0) {
+        if (pc != 0) {
+            errout("-p may only appear on the command line");
+            return(command_action_error);
+        }
+        if (cfg->cfg_port != 0) {
             errout("-p may not be used more than once");
             return(command_action_error);
         }
@@ -362,7 +370,11 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'i': /* -i option on command line: specify the network interface */
-        if (cfg->cfg_intf.nam[0] != '\0' || pc != 0) {
+        if (pc != 0) {
+            errout("-i may only appear on the command line");
+            return(command_action_error);
+        }
+        if (cfg->cfg_intf.nam[0] != '\0') {
             errout("-i may not be used more than once");
             return(command_action_error);
         }
@@ -429,7 +441,7 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
             return(command_action_error);
         }
         f = atof(arg);
-        if (!(f >= 0.001 || f <= 60.0)) {
+        if (!(f >= 0.001 && f <= 60.0)) {
             errout("-P period must be in range 0.001-60 seconds");
             return(command_action_error);
         }
