@@ -676,7 +676,7 @@ static enum command_action source_option(struct config *cfg,
 static enum command_action data_option(struct config *cfg, char *arg)
 {
     uint8_t *data;
-    int len, i, o;
+    int len, i, o, ib;
     char *s;
 
     if (!strncmp(arg, "hex:", 4)) {
@@ -687,13 +687,16 @@ static enum command_action data_option(struct config *cfg, char *arg)
             return(command_action_error);
         }
         data = calloc(len, 1);
-        for (i = 4, o = 0; arg[i]; i += 2, ++o) {
+        ib = 4; /* input base */
+        for (i = ib; arg[i]; ++i) {
+            o = (i - ib) >> 1; /* output offset */
+            data[o] <<= 4;
             if (arg[i] >= '0' && arg[i] <= '9') {
-                data[o] = arg[i] - '0';
+                data[o] |= arg[i] - '0';
             } else if (arg[i] >= 'A' && arg[i] <= 'F') {
-                data[o] = arg[i] - 'A' + 10;
+                data[o] |= arg[i] - 'A' + 10;
             } else if (arg[i] >= 'a' && arg[i] <= 'f') {
-                data[o] = arg[i] - 'a' + 10;
+                data[o] |= arg[i] - 'a' + 10;
             } else {
                 errout("Non hex digit character (%d) in -d option",
                        (int)arg[i]);
