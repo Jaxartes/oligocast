@@ -86,6 +86,7 @@ enum reported_events {
     reported_event_up,                  /* packet received when down */
     reported_event_dn,                  /* time out, no packet received */
     reported_event_cmd,                 /* command received and handled */
+    reported_event_note,                /* informational note */
 };
 
 struct config {
@@ -256,6 +257,8 @@ static void usage(void)
             "        same as the command line options\n"
             "    +v, +k\n"
             "        opposites of the command line options\n"
+            "    ?E, ?I\n"
+            "        state queries related to the command line options\n"
             "    .x\n"
             "        terminate the program\n",
             (progdir <= 0) ? ", -m" : "");
@@ -413,7 +416,7 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         } else if (pc == '+') {
             cfg->cfg_verbose = 0;
         } else {
-            errout(".v is not a valid command");
+            errout("%cv is not a valid command", (int)pc);
         }
         break;
 
@@ -477,15 +480,15 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'k': /* -k listen for commands on stdin */
-        if (pc == '.') {
-            errout(".k is not a valid command");
-            return(command_action_error);
-        } else if (pc == '+') {
+        if (pc == '+') {
             cfg->cfg_command_in = 0;
             cfg->cfg_command_got = 0;
             cfg->cfg_command_ignore = 0;
-        } else {
+        } else if (pc == '-' || pc == '\0') {
             cfg->cfg_command_in = 1;
+        } else {
+            errout("%ck is not a valid command", (int)pc);
+            return(command_action_error);
         }
         break;
 
@@ -540,6 +543,41 @@ static enum command_action source_option(struct config *cfg,
     struct sockaddr_storage *sources;
     int nsources, asources;
     socklen_t srclen;
+
+    /* special case for query option, "?E" / "?I" */
+    if (pc == '?') {
+        char *res;
+        int resa, resl;
+
+        /* allocate space to represent the source list */
+        resa = 32 + 48 * cfg->cfg_nsources;
+        res = calloc(resa, 1);
+
+        /* represent the source list */
+        resl = snprintf(res, resa, "currently: %s%s",
+                        (cfg->cfg_sfmode == MCAST_INCLUDE) ? "-I" : "-E",
+                        cfg->cfg_nsources ? "" : "-");
+        for (i = 0; i < cfg->cfg_nsources; ++i) {
+            if (resl + 2 < resa) {
+                if (i) {
+                    res[resl++] = ',';
+                    res[resl] = '\0';
+                }
+                resl += strlen(auto_ntop(&cfg->cfg_sources[i],
+                                         res + resl, resa - resl));
+            } else {
+                res[0] = '?';
+                res[1] = '\0';
+                resl = 1;
+                break;
+            }
+        }
+
+        /* emit a message about it */
+        emit(cfg, reported_event_note, res);
+        free(res);
+        return(command_action_none);
+    }
 
     /* sanity checks */
     if (pc != '\0' && pc != '-') {
@@ -1170,6 +1208,11 @@ static void emit(struct config *cfg, enum reported_events evt, char *extra)
         /* command issued on stdin; see -k */
         ekw = "command";
         eph = "received command for";
+        break;
+    case reported_event_note:
+        /* informational note */
+        ekw = "note";
+        eph = "note:";
         break;
     default:
         /* unknown event, don't report it */
