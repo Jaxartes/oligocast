@@ -865,6 +865,7 @@ static enum command_action command(struct config *cfg, int fd)
     }
 
     /* remove any final whitespace */
+    l = strlen(cmd);
     while (l > 0 && isspace(cmd[l - 1])) {
         cmd[--l] = '\0';
     }
