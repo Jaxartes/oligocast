@@ -596,7 +596,7 @@ static enum command_action source_option(struct config *cfg,
         delta = arg[pos];
         ++pos;
     }
-    if (delta != '\0' && pos == '\0') {
+    if (delta != '\0' && pc == '\0') {
         errout("-%c doesn't take +/- deltas on command line", oc);
         return(command_action_error);
     }
@@ -671,6 +671,7 @@ static enum command_action source_option(struct config *cfg,
         add_addrs(&cfg->cfg_sources, &cfg->cfg_nsources,
                   cfg->cfg_osources, cfg->cfg_onsources,
                   sources, nsources);
+        free(sources);
         break;
     case '-':
         /* subtract */
@@ -682,6 +683,7 @@ static enum command_action source_option(struct config *cfg,
         sub_addrs(&cfg->cfg_sources, &cfg->cfg_nsources,
                   cfg->cfg_osources, cfg->cfg_onsources,
                   sources, nsources);
+        free(sources);
         break;
     default:
         /* shouldn't happen */
