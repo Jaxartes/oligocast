@@ -131,11 +131,11 @@ enum command_action {
      * configuration change.
      */
     command_action_none,                /* no action */
+    command_action_wait,                /* waiting for more input */
     command_action_error,               /* treat as error */
 #ifdef DO_SOURCES
     command_action_source,              /* source filter mode/list change */
 #endif /* DO_SOURCES */
-    command_action_eof,                 /* end of command input */
     command_action_exit_program,        /* terminate the program */
     command_action_time_change,         /* period/multiplier/timeout changed */
 };
@@ -148,7 +148,7 @@ static enum command_action source_option(struct config *cfg,
 static enum command_action data_option(struct config *cfg, char *arg);
 static enum command_action format_option(struct config *cfg,
                                          int pc, int oc, char *arg);
-static enum command_action command(struct config *cfg, int fd);
+static enum command_action command(struct config *cfg);
 static void progname_to_progdir(void);
 static void errout(char *fmt, ...);
 static void errthrottle(void);
@@ -828,41 +828,20 @@ static enum command_action format_option(struct config *cfg,
 /*
  * command()
  *
- * Read and execute a command.
+ * Parse and execute a command.
  *
  * Parameters:
  *      cfg - configuration structure, where things get stored
- *      fd - file descriptor to get the command from
  *
  * Return value:
  *      What (if any) additional action needs to be taken in response
  *      to the command.
  */
-static enum command_action command(struct config *cfg, int fd)
+static enum command_action command(struct config *cfg)
 {
-    int rv, l, pos;
+    int l, pos;
     char *cmd;
     enum command_action ca;
-
-    /* read command data into the buffer */
-    rv = read(fd, &cfg->cfg_command_buf[cfg->cfg_command_got],
-              sizeof(cfg->cfg_command_buf) - cfg->cfg_command_got);
-    if (rv < 0) {
-        if (errno == EAGAIN || errno == EINTR) {
-            /* nothing really happened */
-            return(command_action_none);
-        } else {
-            errout("error reading command: %s", strerror(errno));
-            errthrottle();
-            return(command_action_error);
-        }
-    }
-    if (rv == 0) {
-        /* end of file */
-        errout("end of command input: implicit +k");
-        return(command_action_eof);
-    }
-    cfg->cfg_command_got += rv;
 
     /* is there a complete line in the buffer? */
     for (l = 0; l < cfg->cfg_command_got; ++l) {
@@ -880,7 +859,7 @@ static enum command_action command(struct config *cfg, int fd)
             cfg->cfg_command_got = 0;
             return(command_action_error);
         } else {
-            return(command_action_none);
+            return(command_action_wait);
         }
     }
 
@@ -2067,41 +2046,25 @@ int main(int argc, char **argv)
             continue;
         } else {
             if (cfg->cfg_command_in && FD_ISSET(STDIN_FILENO, &rfds)) {
-                /* read a command and act on it */
-                ca = command(cfg, STDIN_FILENO);
-                switch (ca) {
-                case command_action_none:
-                    /* nothing more to do */
-                    break;
-                case command_action_error:
-                    /* error occurred, already reported; nothing more to do */
-                    break;
-#ifdef DO_SOURCES
-                case command_action_source:
-                    /* source filter mode / list change */
-                    group_check(cfg, 0);
-                    reapply_filter = 1;
-                    filter_critical = 0;
-                    break;
-#endif /* DO_SOURCES */
-                case command_action_eof:
-                    /* end of command input on stdin */
+                /* read command data into the buffer */
+                rv = read(STDIN_FILENO,
+                          &cfg->cfg_command_buf[cfg->cfg_command_got],
+                          sizeof(cfg->cfg_command_buf) - cfg->cfg_command_got);
+                if (rv < 0) {
+                    if (errno == EAGAIN || errno == EINTR) {
+                        /* nothing really happened */
+                    } else {
+                        errout("error reading command: %s", strerror(errno));
+                        errthrottle();
+                    }
+                }
+                else if (rv == 0) {
+                    /* end of file */
+                    errout("end of command input: implicit +k");
                     cfg->cfg_command_in = 0;
-                    cfg->cfg_command_got = 0;
                     cfg->cfg_command_ignore = 0;
-                    break;
-                case command_action_exit_program:
-                    /* end the program */
-                    errout("exiting on command");
-                    exit(0);
-                    break;
-                case command_action_time_change:
-                    /* period/multiplier/timeout changed */
-                    recompute_timeout = 1;
-                    break;
-                default:
-                    /* nothing more to do */
-                    break;
+                } else {
+                    cfg->cfg_command_got += rv;
                 }
             } else if (cfg->cfg_dir < 0 && FD_ISSET(sok, &rfds)) {
                 /* receive a packet */
@@ -2124,6 +2087,44 @@ int main(int argc, char **argv)
                         emit(cfg, reported_event_up, NULL);
                     }
                 }
+            }
+        }
+
+        /* handle any commands that came in on stdin */
+        while (cfg->cfg_command_in && cfg->cfg_command_got > 0) {
+            ca = command(cfg);
+            if (ca == command_action_wait) {
+                /* no complete lines left */
+                break;
+            }
+            switch (ca) {
+            case command_action_none:
+                /* nothing more to do */
+                break;
+            case command_action_error:
+                /* error occurred, already reported; nothing more to do */
+                break;
+    #ifdef DO_SOURCES
+            case command_action_source:
+                /* source filter mode / list change */
+                group_check(cfg, 0);
+                reapply_filter = 1;
+                filter_critical = 0;
+                break;
+    #endif /* DO_SOURCES */
+            case command_action_exit_program:
+                /* end the program */
+                errout("exiting on command");
+                exit(0);
+                break;
+            case command_action_time_change:
+                /* period/multiplier/timeout changed */
+                recompute_timeout = 1;
+                break;
+            default:
+            case command_action_wait:
+                /* nothing more to do */
+                break;
             }
         }
     }
