@@ -205,7 +205,7 @@ static void usage(void)
         fprintf(stderr,
             "    -T ttl -- time to live / hop limit value to use;\n"
             "              \"-\" for system default; default %d\n",
-            (int)DEFAULT_TTL);
+            (int)DEF_TTL);
     }
 #ifdef DO_SOURCES
     fprintf(stderr,
@@ -1694,7 +1694,7 @@ int main(int argc, char **argv)
     main_cfg.cfg_intf.nam[0] = '\0';
     main_cfg.cfg_intf.idx = 0;
     main_cfg.cfg_intf.adr.s_addr = INADDR_ANY;
-    main_cfg.cfg_ttl = DEFAULT_TTL;
+    main_cfg.cfg_ttl = DEF_TTL;
     main_cfg.cfg_verbose = 0;
     main_cfg.cfg_label = NULL;
     main_cfg.cfg_label_csv = NULL;
@@ -1752,14 +1752,14 @@ int main(int argc, char **argv)
         /* default multicast group; for IPv4, same one mtools uses */
         cfg->cfg_grplen = sizeof(cfg->cfg_grp);
         if (cfg->cfg_af == AF_INET6) {
-            auto_pton("ff35::abcd", &cfg->cfg_grp, &cfg->cfg_grplen, cfg);
+            auto_pton(DEF_IPV6_GROUP, &cfg->cfg_grp, &cfg->cfg_grplen, cfg);
         } else {
-            auto_pton("232.1.1.1", &cfg->cfg_grp, &cfg->cfg_grplen, cfg);
+            auto_pton(DEF_IPV4_GROUP, &cfg->cfg_grp, &cfg->cfg_grplen, cfg);
         }
     }
     if (cfg->cfg_port == 0) {
         /* default port number; same one mtools uses */
-        cfg->cfg_port = 4444; /* port number */
+        cfg->cfg_port = DEF_UDP_PORT; /* port number */
     }
     if (cfg->cfg_intf.nam[0] == '\0') {
         errout("what network interface? specify -i");

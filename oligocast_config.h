@@ -31,10 +31,13 @@
  * Build-time settings for "oligocast".  You might edit these to adapt
  * oligocast to your needs, mainly to the platform you're going to
  * compile and run it on.
+ *
+ * The first bunch of #defines relate to operating system compatibility
+ * and functionality.  The second bunch of defines related to defaults.
  */
 
 /*
- * Explanation of the #defines:
+ * #defines for operating system compatibility and functionality:
  *      DO_SOURCES
  *          Enable source specific multicast functionality.
  *          Recommendation: #define this if you can.  Hopefully you can.
@@ -100,5 +103,31 @@
 #endif /* !__linux__ */
 #define HAVE_GETIFADDRS
 
-#define DEFAULT_TTL 4 /* hop limit / TTL to use by default; -1 for sys default*/
+/*
+ * #defines related to defaults:
+ *      DEF_TTL
+ *          Default hop limit / time to live value to use.  Overridden
+ *          at runtime with the "-T" command line option.
+ *          overridden at runtime with the "-T" command line option.
+ *      DEF_UDP_PORT
+ *          UDP port number for sending and receiving packets.  Overridden
+ *          at runtime with the "-p" command line option.
+ *      DEF_IPV4_GROUP
+ *      DEF_IPV6_GROUP
+ *          Multicast group address, for use with IPv4 and IPv6 respectively.
+ *          Overridden at runtime with the "-g" command line option.
+ *          Doing so is recommended: there are no known "particularly right"
+ *          values for defaults.
+ */
+
+#define DEF_TTL 4 /* reasonable compromise */
+/* #define DEF_TTL 1 */ /* more conservative; also "mtools" uses this */
+/* #define DEF_TTL -1 */ /* -1 uses operating system default */
+#define DEF_UDP_PORT 4444 /* historical: "mtools" uses this */
+/* #define DEF_UDP_PORT 44444 */ /* not in the reserved range */
+#define DEF_IPV4_GROUP "224.1.1.1" /* historical: "mtools" uses this */
+/* #define DEF_IPV4_GROUP "232.1.1.1" */ /* early "oligocast" used this */
+/* #define DEF_IPV4_GROUP "239.1.1.1" */ /* is in admin-scoped block */
+#define DEF_IPV6_GROUP "ff15::abcd" /* site-scoped any-source multicast */
+/* #define DEF_IPV6_GROUP "ff35::abcd" */ /* early "oligocast" used this */
 
