@@ -944,7 +944,7 @@ static void progname_to_progdir(void)
 
     /* any '.' extension? */
     cp = strrchr(progname, '.');
-    if (cp != NULL && cp != progname) {
+    if (cp != NULL) {
         pnl = cp - progname;
     } else {
         pnl = strlen(progname);
