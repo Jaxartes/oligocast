@@ -1507,7 +1507,6 @@ static void sub_addrs(struct sockaddr_storage **res_addrs, int *res_naddrs,
         } else if (c == 0) {
             /* something in both lists, leave it out */
             ++i;
-            ++j;
         }
     }
     if (i < inc_naddrs) {
