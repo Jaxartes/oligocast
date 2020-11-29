@@ -62,4 +62,5 @@ There is much to be done on this project:
 * Potential feature: When receiving a packet, report the source address.
 * Potential feature: When receiving a packet, optionally
   check its contents against "-d".
-
+* Potential feature: Make "-i" optional, having it pick an interface for
+  itself if none is specified.

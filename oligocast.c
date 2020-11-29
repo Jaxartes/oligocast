@@ -100,12 +100,22 @@ struct config {
     struct oligocast_if     cfg_intf;       /* network interface */
     int                     cfg_ttl;        /* time to live / hop limit */
 #ifdef DO_SOURCES
-    uint32_t                cfg_sfmode;     /* src mode: MCAST_{IN,EX}CLUDE */
-    struct sockaddr_storage *cfg_sources;   /* source list for filtering */
-    int                     cfg_nsources;   /* number in cfg_sources */
-    uint32_t                cfg_osfmode;    /* old cfg_sfmode */
-    struct sockaddr_storage *cfg_osources;  /* old cfg_sources */
-    int                     cfg_onsources;  /* old cfg_nsources */
+    /* Source filtering settings:
+     *      Apparent current working setting:
+     *          cfg_osfmode -- mode: MCAST_{IN,EX}CLUDE
+     *          cfg_osources -- array of source addresses
+     *          cfg_onsources -- number of entries in cfg_osources
+     *      Desired new setting:
+     *          cfg_sfmode -- mode: MCAST_{IN,EX}CLUDE
+     *          cfg_sources -- array of source addresses
+     *          cfg_nsources -- number of entries in cfg_sources
+     */
+    uint32_t                cfg_sfmode;
+    struct sockaddr_storage *cfg_sources;
+    int                     cfg_nsources;
+    uint32_t                cfg_osfmode;
+    struct sockaddr_storage *cfg_osources;
+    int                     cfg_onsources;
 #endif /* DO_SOURCES */
     int                     cfg_verbose;    /* report each packet */
     char *                  cfg_label;      /* output label */
@@ -540,8 +550,10 @@ static enum command_action source_option(struct config *cfg,
 #ifdef DO_SOURCES
     uint32_t newmode;
     int delta = 0, pos = 0, len, end, i;
-    struct sockaddr_storage *sources;
+    struct sockaddr_storage *sources; /* source list in the option */
     int nsources, asources;
+    struct sockaddr_storage *csources; /* combined sources */
+    int cnsources;
     socklen_t srclen;
 
     /* special case for query option, "?E" / "?I" */
@@ -554,7 +566,7 @@ static enum command_action source_option(struct config *cfg,
         res = calloc(resa, 1);
 
         /* represent the source list */
-        resl = snprintf(res, resa, "currently: %s%s",
+        resl = snprintf(res, resa, "source setting: %s%s",
                         (cfg->cfg_sfmode == MCAST_INCLUDE) ? "-I" : "-E",
                         cfg->cfg_nsources ? "" : "-");
         for (i = 0; i < cfg->cfg_nsources; ++i) {
@@ -644,43 +656,26 @@ static enum command_action source_option(struct config *cfg,
         }
     }
 
-    /* bookkeeping */
+    /* figure out the combined list of sources */
     sort_addrs(sources, nsources);
-    if (cfg->cfg_osources) {
-        free(cfg->cfg_osources);
-        cfg->cfg_osources = NULL;
-        cfg->cfg_onsources = 0;
-    }
+    csources = NULL;
+    cnsources = 0;
     switch (delta) {
     case '\0':
         /* no delta, just replace the list */
-        cfg->cfg_osfmode = cfg->cfg_sfmode;
-        cfg->cfg_sfmode = newmode;
-        cfg->cfg_osources = cfg->cfg_sources;
-        cfg->cfg_onsources = cfg->cfg_nsources;
-        cfg->cfg_sources = sources;
-        cfg->cfg_nsources = nsources;
+        csources = sources;
+        cnsources = nsources;
         break;
     case '+':
         /* add */
-        cfg->cfg_osfmode = cfg->cfg_sfmode;
-        cfg->cfg_osources = cfg->cfg_sources;
-        cfg->cfg_onsources = cfg->cfg_nsources;
-        cfg->cfg_sources = NULL;
-        cfg->cfg_nsources = 0;
-        add_addrs(&cfg->cfg_sources, &cfg->cfg_nsources,
+        add_addrs(&csources, &cnsources,
                   cfg->cfg_osources, cfg->cfg_onsources,
                   sources, nsources);
         free(sources);
         break;
     case '-':
         /* subtract */
-        cfg->cfg_osfmode = cfg->cfg_sfmode;
-        cfg->cfg_osources = cfg->cfg_sources;
-        cfg->cfg_onsources = cfg->cfg_nsources;
-        cfg->cfg_sources = NULL;
-        cfg->cfg_nsources = 0;
-        sub_addrs(&cfg->cfg_sources, &cfg->cfg_nsources,
+        sub_addrs(&csources, &cnsources,
                   cfg->cfg_osources, cfg->cfg_onsources,
                   sources, nsources);
         free(sources);
@@ -691,6 +686,16 @@ static enum command_action source_option(struct config *cfg,
         free(sources);
         return(command_action_error);
     }
+
+    /* store the new sources to apply later */
+    if (cfg->cfg_sources) {
+        free(cfg->cfg_sources);
+        cfg->cfg_sources = NULL;
+        cfg->cfg_nsources = 0;
+    }
+    cfg->cfg_sfmode = newmode;
+    cfg->cfg_nsources = cnsources;
+    cfg->cfg_sources = csources;
 
     return(command_action_source);
 #else /* DO_SOURCES */
@@ -1968,6 +1973,18 @@ int main(int argc, char **argv)
                 /* no tricky retries when we can't even join the group */
                 exit(1);
 #endif /* !DO_SOURCES */
+            } else {
+                /* the target/new settings have become the current/old ones */
+                if (cfg->cfg_osources) {
+                    free(cfg->cfg_osources);
+                }
+                cfg->cfg_osfmode = cfg->cfg_sfmode;
+                cfg->cfg_onsources = cfg->cfg_nsources;
+                cfg->cfg_osources = calloc(cfg->cfg_nsources,
+                                           sizeof(cfg->cfg_osources[0]));
+                memcpy(cfg->cfg_osources,
+                       cfg->cfg_sources,
+                       cfg->cfg_nsources * sizeof(cfg->cfg_osources[0]));
             }
         }
 
