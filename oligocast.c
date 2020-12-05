@@ -1151,7 +1151,7 @@ static void emit(struct config *cfg, enum reported_events evt, char *extra)
 {
     struct timeval tv;
     char ts[128];
-    char *ekw, *eph;
+    char *ekw, *eph, *eex;
 
     /*
      * Decide whether 'evt' is an event we're reporting now,
@@ -1212,9 +1212,13 @@ static void emit(struct config *cfg, enum reported_events evt, char *extra)
     /* message */
     if (cfg->cfg_csv) {
         /* comma separated values format: time, label, keyword, extra */
+        eex = extra ? csv_escape(extra) : NULL;
         printf("%s%s%s,%s,%s\n",
                ts, ts[0] ? "," : "",
-               cfg->cfg_label_csv, ekw, extra ? : "");
+               cfg->cfg_label_csv, ekw, eex ? : "");
+        if (eex) {
+            free(eex);
+        }
     } else {
         /* more or less human readable format */
         printf("%s%s%s %s%s%s\n",
