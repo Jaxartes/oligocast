@@ -129,7 +129,7 @@ struct config {
     size_t                  cfg_data_len;   /* number of bytes in cfg_data */
     int                     cfg_join;       /* join even when transmitting */
     int                     cfg_command_in; /* allow commands on stdin */
-    char                    cfg_command_buf[512]; /* partial commands read */
+    char                    cfg_command_buf[4096]; /* partial commands read */
     int                     cfg_command_got;/* bytes in cfg_command_buf[] */
     int                     cfg_command_ignore; /* ignore command */
     struct oligocast_sml_state cfg_sml_state; /* for setup_mcast_listen() */
