@@ -669,14 +669,14 @@ static enum command_action source_option(struct config *cfg,
     case '+':
         /* add */
         add_addrs(&csources, &cnsources,
-                  cfg->cfg_osources, cfg->cfg_onsources,
+                  cfg->cfg_sources, cfg->cfg_nsources,
                   sources, nsources);
         free(sources);
         break;
     case '-':
         /* subtract */
         sub_addrs(&csources, &cnsources,
-                  cfg->cfg_osources, cfg->cfg_onsources,
+                  cfg->cfg_sources, cfg->cfg_nsources,
                   sources, nsources);
         free(sources);
         break;
