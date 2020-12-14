@@ -1592,6 +1592,10 @@ static int timestamp_log(struct timeval *tv, char *buf, size_t len, void *arg)
         pos += snprintf(buf + pos, len - pos, ".%03u",
                         (unsigned)(tv->tv_usec / 1000));
     }
+    if ((pos == 0 || pos >= len) && len > 0) {
+        /* the string didn't fit; this shouldn't happen */
+        buf[pos = 0] = '\0';
+    }
     return(pos);
 }
 
@@ -1608,9 +1612,14 @@ static int timestamp_log(struct timeval *tv, char *buf, size_t len, void *arg)
  */
 static int timestamp_raw(struct timeval *tv, char *buf, size_t len, void *arg)
 {
-    return(snprintf(buf, len, "%lu.%03u",
-                    (unsigned long)tv->tv_sec,
-                    (unsigned)(tv->tv_usec / 1000)));
+    int pos = snprintf(buf, len, "%lu.%03u",
+                       (unsigned long)tv->tv_sec,
+                       (unsigned)(tv->tv_usec / 1000));
+    if (pos >= len && len > 0) {
+        /* the string didn't fit; this shouldn't happen */
+        buf[pos = 0] = '\0';
+    }
+    return(pos);
 }
 
 /*
@@ -1634,6 +1643,10 @@ static int timestamp_num(struct timeval *tv, char *buf, size_t len, void *arg)
     if (pos > 0 && pos < len) {
         pos += snprintf(buf + pos, len - pos, ".%03u",
                         (unsigned)(tv->tv_usec / 1000));
+    }
+    if ((pos == 0 || pos >= len) && len > 0) {
+        /* the string didn't fit; this shouldn't happen */
+        buf[pos = 0] = '\0';
     }
     return(pos);
 }

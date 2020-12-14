@@ -1,0 +1,14 @@
+# input to oligocast to test csv_escape()
+# pass it into ./oligocast -rilo -kfcsv
+-l
+-l"
+-l"""""""""
+-lone
+-ltwo_three
+-lfour-five
+-lsix seven eight nine
+-lten"eleven"twelve,thirteen"fourteen"fifteen
+-l福
+-lМаунтин-Вью
+-l 
+.x

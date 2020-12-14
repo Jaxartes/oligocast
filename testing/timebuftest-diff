@@ -1,0 +1,49 @@
+diff --git a/oligocast.c b/oligocast.c
+index a545d18..5276db4 100644
+--- a/oligocast.c
++++ b/oligocast.c
+@@ -824,6 +824,44 @@ static enum command_action format_option(struct config *cfg,
+         timestamp_formatter = &timestamp_none;
+         timestamp_formatter_arg = NULL;
+         return(command_action_none);
++    } else if (!strcasecmp(arg, "timebuftest")) {
++        /* -f timebuftest -- hack code for testing buffer limit handling */
++        char buf[65];
++        struct timeval tuse;
++        gettimeofday(&tuse, NULL);
++        int len, pos, i;
++        int fil = 234;
++
++        for (len = 0; len < sizeof(buf); ++len) {
++            memset(buf, fil, sizeof(buf));
++            pos = (*timestamp_formatter)(&tuse, buf, len,
++                                         timestamp_formatter_arg);
++            if (len != 0) {
++                if (pos < 0 || pos >= len) {
++                    fprintf(stderr, "! Weird pos value %d when len is %d\n",
++                            (int)pos, (int)len);
++                }
++                for (i = 0; i < sizeof(buf); ++i) {
++                    if (buf[i] != fil && (i >= len)) {
++                        fprintf(stderr,
++                                "! Data written (%u) at %d after len %d\n",
++                                (unsigned)buf[i], (int)i, (int)len);
++                    }
++                    if (buf[i] == 0 && i < pos) {
++                        fprintf(stderr,
++                                "! Nul byte seen at %d before %d\n",
++                                (int)i, (int)pos);
++                    }
++                    if (buf[i] != 0 && i == pos) {
++                        fprintf(stderr,
++                                "! Non-nul byte (%u) at pos (%d)\n",
++                                (unsigned)buf[i], (int)pos);
++                    }
++                }
++            }
++        }
++        printf("%s\n", buf);
++        exit(1);
+     } else {
+         errout("-f %s is not a valid formatting option", arg);
+         return(command_action_error);
