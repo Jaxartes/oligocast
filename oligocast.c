@@ -1770,7 +1770,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     if (cfg->cfg_grp.ss_family == AF_UNSPEC) {
-        /* default multicast group; for IPv4, same one mtools uses */
+        /* default multicast group */
         cfg->cfg_grplen = sizeof(cfg->cfg_grp);
         if (cfg->cfg_af == AF_INET6) {
             auto_pton(DEF_IPV6_GROUP, &cfg->cfg_grp, &cfg->cfg_grplen, cfg);
@@ -1779,7 +1779,7 @@ int main(int argc, char **argv)
         }
     }
     if (cfg->cfg_port == 0) {
-        /* default port number; same one mtools uses */
+        /* default port number */
         cfg->cfg_port = DEF_UDP_PORT; /* port number */
     }
     if (cfg->cfg_intf.nam[0] == '\0') {
