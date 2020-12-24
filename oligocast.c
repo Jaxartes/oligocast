@@ -1990,6 +1990,7 @@ int main(int argc, char **argv)
                 exit(1);
 #endif /* !DO_SOURCES */
             } else {
+#ifdef DO_SOURCES
                 /* the target/new settings have become the current/old ones */
                 if (cfg->cfg_osources) {
                     free(cfg->cfg_osources);
@@ -2001,6 +2002,7 @@ int main(int argc, char **argv)
                 memcpy(cfg->cfg_osources,
                        cfg->cfg_sources,
                        cfg->cfg_nsources * sizeof(cfg->cfg_osources[0]));
+#endif /* DO_SOURCES */
             }
         }
 
