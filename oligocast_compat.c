@@ -267,8 +267,8 @@ void identify_interface(char *name, struct oligocast_if *intf,
             freeifaddrs(ifp);
         }
         if (!ok) {
-            snprintf(errbuf, errlen, "IPv4 address not found: %s",
-                     strerror(errno));
+            snprintf(errbuf, errlen, "IPv4 address not found for '%s'",
+                     intf->nam);
             return;
         }
     }
