@@ -1940,6 +1940,10 @@ int main(int argc, char **argv)
 
     /* main loop, where stuff actually happens */
     for (;;) {
+        if (cfg->cfg_verbose > 2) {
+            errout("top of main loop"); /* handy for debugging */
+        }
+
         /* Handle changes to the timeout in the configuration */
         if (recompute_timeout) {
             recompute_timeout = 0;
