@@ -2025,7 +2025,9 @@ int main(int argc, char **argv)
         tflat *= 1000000;
         tflat += tnow.tv_usec - tlast.tv_usec;
         if (tflat < 0) {
+            /* Time has gone backwards.  Or at least the clock. */
             tflat = 0;
+            tlast = tnow;
         }
         if (cfg->cfg_command_in) {
             /* listening for commands, if enabled */
@@ -2045,6 +2047,7 @@ int main(int argc, char **argv)
             tflat = cfg->cfg_period_us - tflat;
         }
         if (tflat < 0) {
+            /* We missed it. Hopefully not by much.  Better go *now.* */
             tflat = 0;
         }
         tsel.tv_sec = tflat / 1000000;
