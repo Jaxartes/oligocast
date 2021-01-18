@@ -511,6 +511,9 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         }
         break;
 
+    case '.': /* .. no operation (command is echoed) */
+        return(command_action_none);
+
     default:
         if (pc == '\0') {
             errout("-%c is not a valid option", oc);
