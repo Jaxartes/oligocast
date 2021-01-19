@@ -26,13 +26,17 @@ sudo -v # make sure we can do root; this may prompt the user for password
 
 (
     echo "..started"
-    for i in 25 50 75 125 ; do
-        echo "..about to move time forward $i seconds"
+    sleep 30
+    for i in 25 50 75 125 150 ; do
+        echo "..about to move time forward $i seconds (in 1 second)"
+        sleep 1
         sudo date -s "$i sec" >&2
         echo "..moved time forward $i seconds"
         sleep 120
-
-        echo "..about to move time backward $i seconds"
+    done
+    for i in 25 50 75 125 150 ; do
+        echo "..about to move time backward $i seconds (in 1 second)"
+        sleep 1
         sudo date -s "$i sec ago" >&2
         echo "..moved time backward $i seconds"
         sleep 120
