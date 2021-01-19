@@ -269,6 +269,8 @@ static void usage(void)
             "        opposites of the command line options\n"
             "    ?E, ?I\n"
             "        state queries related to the command line options\n"
+            "    ..\n"
+            "        command does nothing; but is echoed with timestamp\n"
             "    .x\n"
             "        terminate the program\n",
             (progdir <= 0) ? ", -m" : "");
