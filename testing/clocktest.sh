@@ -19,6 +19,9 @@ ifname=lo                   # name of the network interface to use
 group=225.2.2.5             # multicast group address to use
 opts="-vvv -frawtime"       # options, mainly for formatting
 path="./oligocast"          # path to the software under test
+timeshow() { # something to show time outside of oligocast
+    date +%s
+}
 
 ## ## ## go for it
 
@@ -27,19 +30,36 @@ sudo -v # make sure we can do root; this may prompt the user for password
 (
     echo "..started"
     sleep 30
-    for i in 25 50 75 125 150 ; do
-        echo "..about to move time forward $i seconds (in 1 second)"
-        sleep 1
-        sudo date -s "$i sec" >&2
-        echo "..moved time forward $i seconds"
-        sleep 111
-    done
-    for i in 25 50 75 125 150 ; do
-        echo "..about to move time backward $i seconds (in 1 second)"
-        sleep 1
-        sudo date -s "$i sec ago" >&2
-        echo "..moved time backward $i seconds"
-        sleep 111
+    for wake_before in false true ; do
+        for wake_after in false true ; do
+            for i in 25 50 75 125 150 ; do
+                if $wake_before ; then
+                    echo "..wakeup"
+                fi
+                sleep 1
+                echo "`timeshow` about to move time forward $i seconds" >&2
+                sudo date -s "$i sec" >&2
+                echo "`timeshow` moved time forward $i seconds" >&2
+                if $wake_after ; then
+                    echo "..wakeup"
+                fi
+                sleep 111
+            done
+            for i in 25 50 75 125 150 ; do
+                if $wake_before ; then
+                    echo "..wakeup"
+                fi
+                sleep 1
+                echo "`timeshow` about to move time backward $i seconds" >&2
+                sudo date -s "$i sec ago" >&2
+                echo "`timeshow` moved time backward $i seconds" >&2
+                if $wake_after ; then
+                    echo "..wakeup"
+                fi
+                sleep 111
+            done
+        done
     done
     echo ".x"
 ) | "$path" $opts -kti"$ifname" -g$group -P60
+
