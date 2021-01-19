@@ -32,14 +32,14 @@ sudo -v # make sure we can do root; this may prompt the user for password
         sleep 1
         sudo date -s "$i sec" >&2
         echo "..moved time forward $i seconds"
-        sleep 120
+        sleep 111
     done
     for i in 25 50 75 125 150 ; do
         echo "..about to move time backward $i seconds (in 1 second)"
         sleep 1
         sudo date -s "$i sec ago" >&2
         echo "..moved time backward $i seconds"
-        sleep 120
+        sleep 111
     done
     echo ".x"
 ) | "$path" $opts -kti"$ifname" -g$group -P60
