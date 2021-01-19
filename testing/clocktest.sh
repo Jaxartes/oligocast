@@ -42,4 +42,4 @@ sudo -v # make sure we can do root; this may prompt the user for password
         sleep 120
     done
     echo ".x"
-) | "$path" $opts -kri"$ifname" -g$group
+) | "$path" $opts -kti"$ifname" -g$group -P60
