@@ -2101,8 +2101,11 @@ int main(int argc, char **argv)
                     if (errno == EAGAIN || errno == EINTR) {
                         /* nothing really happened */
                     } else {
-                        errout("error reading command: %s", strerror(errno));
-                        errthrottle();
+                        /* error; don't let it happen again */
+                        errout("treating error on stdin (%s) as implicit +k",
+                               strerror(errno));
+                        cfg->cfg_command_in = 0;
+                        cfg->cfg_command_ignore = 0;
                     }
                 }
                 else if (rv == 0) {
