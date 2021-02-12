@@ -58,7 +58,8 @@
  *          Indicates that whatever API is used to set up source filtering
  *          (e.g. setsourcefilter()) requires that the multicast group
  *          be joined separately.
- *          Recommended: Needed on Linux, possibly other systems.
+ *          Recommended: Needed on Linux, possibly other systems, at least
+ *          when DO_SOURCES is enabled.
  *      HAVE_MULTICAST_ALL
  *          Use IP_MULTICAST_ALL socket option.
  *          Recommendation: #define this on Linux 2.6.31 and later.
