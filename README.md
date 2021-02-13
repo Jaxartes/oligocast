@@ -51,7 +51,6 @@ be changed on the fly, by using the "-k" option and then passing new
 ## TODO
 
 There is much to be done on this project:
-* More testing.
 * Test on non-Linux platforms.
 * Write a manual page (manpage) for this program.
 * Once a manual page is written, trim down `usage()`, which is way too long,
