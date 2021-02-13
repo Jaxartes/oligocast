@@ -385,6 +385,15 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'i': /* -i option on command line: specify the network interface */
+        if (pc == '?') {
+            /* for testing: display interface information */
+            snprintf(errbuf, sizeof(errbuf),
+                     "interface info: name '%s' index %u addr 0x%x",
+                     cfg->cfg_intf.nam, (unsigned)cfg->cfg_intf.idx,
+                     (unsigned)cfg->cfg_intf.adr.s_addr);
+            emit(cfg, reported_event_note, errbuf);
+            return(command_action_none);
+        }
         if (pc != 0) {
             errout("-i may only appear on the command line");
             return(command_action_error);
