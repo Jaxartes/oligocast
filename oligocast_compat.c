@@ -40,8 +40,6 @@
  * a way to look it up.  For IPv4, some implementations also use the
  * interface index, while many others rely on the interface address and
  * it can be difficult to find that out.
- *
- * 
  */
 
 #include "oligocast_config.h"
@@ -125,7 +123,7 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
          * Use a socket option to join the group. What's available for this?
          *      For IPv4:
          *          IP_ADD_MEMBERSHIP which appears in RFC 3678, Linux, BSD.
-         *      For IPv6: MCAST_JOIN_GROUP?
+         *      For IPv6:
          *          IPV6_JOIN_GROUP which appears in RFC 3493, BSD. Linux?
          *          IPV6_ADD_MEMBERSHIP which appears in Linux.
          *      For IPv4 or IPv6:

@@ -117,8 +117,9 @@
  *      DEF_IPV6_GROUP
  *          Multicast group address, for use with IPv4 and IPv6 respectively.
  *          Overridden at runtime with the "-g" command line option.
- *          Doing so is recommended: there are no known "particularly right"
- *          values for defaults.
+ *          The "-g" option is recommended: there are no known
+ *          "particularly right" multicast group addresses for this.
+ * A few examples of each are given below.
  */
 
 #define DEF_TTL 4 /* reasonable compromise */
