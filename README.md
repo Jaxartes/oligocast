@@ -58,7 +58,7 @@ There is much to be done on this project:
   down to just a list of options.
 * Go through the code for places `errthrottle()` should be used.
 * Maybe #ifdef all the IPv6-specific code, for building on systems
-  where IPv6 multicast is missing or badly broken.
+  where IPv6 multicast is missing or badly broken.  Maybe one for IPv4 too.
 * Potential feature: When receiving a packet, report the source address.
 * Potential feature: When receiving a packet, optionally
   check its contents against "-d".
