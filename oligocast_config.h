@@ -74,8 +74,8 @@
  *          Recommendation: #define this on Linux 3.5 and later.
  *      HAVE_GETIFADDRS
  *          Use getifaddrs() to get information about network devices.
- *          Recommendation: #define this on BSD systems, and on Linux since
- *          glibc 2.3.
+ *          Recommendation: #define this on BSD systems, and on Linux
+ *          greater than or equal to glibc 2.3.
  *      HAVE_SA_LEN
  *          'struct sockaddr' has a member 'sa_len' and it needs to be filled
  *          in with the right length.
