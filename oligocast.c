@@ -2098,7 +2098,9 @@ int main(int argc, char **argv)
                           &cfg->cfg_command_buf[cfg->cfg_command_got],
                           sizeof(cfg->cfg_command_buf) - cfg->cfg_command_got);
                 if (rv < 0) {
-                    if (errno == EAGAIN || errno == EINTR) {
+                    if (errno == EAGAIN || errno == EINTR ||
+                        errno == EWOULDBLOCK) {
+
                         /* nothing really happened */
                     } else {
                         /* error; don't let it happen again */
