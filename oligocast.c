@@ -1696,7 +1696,7 @@ int main(int argc, char **argv)
     int recompute_timeout, reapply_filter, filter_critical;
     int rx_state_up = 0;
     enum command_action ca;
-    char empty[1];
+    char empty[1], errbuf[256];
     uint32_t rxpkt[512];
     struct sockaddr_storage as, dsta;
     struct sockaddr_in *a4;
@@ -1919,6 +1919,11 @@ int main(int argc, char **argv)
 #else /* HAVE_MULTICAST_IF_IP_MREQN */
         /* IP_MULTICAST_IF takes an interface address */
         struct in_addr oarg = cfg->cfg_intf.adr;
+        if (oarg.s_addr == INADDR_ANY) {
+            errout("problem setting IP_MULTICAST_IF:"
+                   " IPv4 address not found for '%s'", cfg->cfg_intf.nam);
+            /* go on and try, in spite of this error */
+        }
 #endif /* HAVE_MULTICAST_IF_IP_MREQN */
         rv = setsockopt(sok, IPPROTO_IP, IP_MULTICAST_IF, &oarg, sizeof(oarg));
         if (rv < 0) {
@@ -1976,15 +1981,19 @@ int main(int argc, char **argv)
         }
         if (reapply_filter) {
             reapply_filter = 0;
-            rv = setup_mcast_listen(sok, &cfg->cfg_intf,
-                                    (void *)&cfg->cfg_grp, cfg->cfg_grplen,
+            errbuf[0] = '\0';
+            setup_mcast_listen(sok, &cfg->cfg_intf,
+                               (void *)&cfg->cfg_grp, cfg->cfg_grplen,
 #ifdef DO_SOURCES
-                                    cfg->cfg_sfmode, cfg->cfg_nsources,
-                                    cfg->cfg_sources,
+                               cfg->cfg_sfmode, cfg->cfg_nsources,
+                               cfg->cfg_sources,
 #endif /* DO_SOURCES */
-                                    &cfg->cfg_sml_state);
-            if (rv < 0) {
-                errout("filter setting failed: %s", strerror(errno));
+                               &cfg->cfg_sml_state,
+                               errbuf, sizeof(errbuf));
+            if (errbuf[0]) {
+                /* setup_mcast_listen() failed */
+
+                errout("%s", errbuf);
 #ifdef DO_SOURCES
                 if (filter_critical) {
                     exit(1);

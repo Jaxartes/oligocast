@@ -86,19 +86,24 @@
  *          needs to retain from one call to another.  The caller will
  *          allocate it and keep it around, but won't do anything else except
  *          initialize 'state->ever_called' to 0.
- * Return value:
- *      >=0 on success
- *      <0 on error, and errno is set
+ *      errbuf -- buffer that will get an error message in case of failure,
+ *          otherwise empty string
+ *      errlen -- length of errbuf in bytes
  */
-int setup_mcast_listen(int sok, struct oligocast_if *intf,
-                       struct sockaddr *group, socklen_t grouplen,
+void setup_mcast_listen(int sok, struct oligocast_if *intf,
+                        struct sockaddr *group, socklen_t grouplen,
 #ifdef DO_SOURCES
-                       uint32_t fmode,
-                       int numsrc, struct sockaddr_storage *sources,
+                        uint32_t fmode,
+                        int numsrc, struct sockaddr_storage *sources,
 #endif
-                       struct oligocast_sml_state *state)
+                        struct oligocast_sml_state *state,
+                        char *errbuf, size_t errlen)
 {
     int rv = 0;
+
+    if (errlen > 0) {
+        errbuf[0] = '\0';
+    }
 
     if (!state->ever_called) {
         /* initialize the state structure */
@@ -109,12 +114,12 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
 #ifdef DO_SOURCES
     if (fmode == MCAST_INCLUDE && numsrc == 0 && !state->joined) {
         /* we haven't joined the group and don't want to */
-        return(0);
+        return;
     }
 #else /* DO_SOURCES */
     if (state->joined) {
         /* joining is all we want to do and we've done it */
-        return(0);
+        return;
     }
 #endif /* !DO_SOURCES */
 #if !defined(DO_SOURCES) || defined(NEED_MEMBERSHIP_FIRST)
@@ -137,7 +142,11 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
             ipv6mr.ipv6mr_interface = intf->idx;
             rv = setsockopt(sok, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                             &ipv6mr, sizeof(ipv6mr));
-            if (rv) { return(rv); }
+            if (rv) {
+                snprintf(errbuf, errlen, "failed to join group: %s",
+                         strerror(errno));
+                return;
+            }
         } else {
             /* IPv4 */
 #ifdef HAVE_IP_ADD_MEMBERSHIP_IP_MREQN
@@ -150,6 +159,11 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
             struct ip_mreq imr;
             memset(&imr, 0, sizeof(imr));
             imr.imr_multiaddr = ((struct sockaddr_in *)group)->sin_addr;
+            if (intf->adr.s_addr == INADDR_ANY) {
+                snprintf(errbuf, errlen, "no IPv4 address found on '%s'",
+                         intf->nam);
+                return;
+            }
             imr.imr_interface = intf->adr;
 #ifndef WANT_IFADDR
 #define WANT_IFADDR /* make identify_interface() fill in intf->adr for us */
@@ -157,7 +171,11 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
 #endif /* !HAVE_IP_ADD_MEMBERSHIP_IP_MREQN */
             rv = setsockopt(sok, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                             &imr, sizeof(imr));
-            if (rv) { return(rv); }
+            if (rv) {
+                snprintf(errbuf, errlen, "failed to join group: %s",
+                         strerror(errno));
+                return;
+            }
         }
         state->joined = 1;
     }
@@ -170,7 +188,11 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
      */
     rv = setsourcefilter(sok, intf ? intf->idx : 0, group, grouplen,
                          fmode, numsrc, sources);
-    if (rv) { return(rv); }
+    if (rv) {
+        snprintf(errbuf, errlen,
+                 "filter setting failed: %s", strerror(errno));
+        return;
+    }
 #else /* HAVE_SETSOURCEFILTER */
     /*
      * Source specific multicast without setsourcefilter(): Can definitely
@@ -187,7 +209,7 @@ int setup_mcast_listen(int sok, struct oligocast_if *intf,
     }
 #endif /* !DO_SOURCES */
 
-    return(0);
+    return;
 }
 
 /*
@@ -265,8 +287,7 @@ void identify_interface(char *name, struct oligocast_if *intf,
             freeifaddrs(ifp);
         }
         if (!ok) {
-            snprintf(errbuf, errlen, "IPv4 address not found for '%s'",
-                     intf->nam);
+            intf->adr.s_addr = INADDR_ANY;
             return;
         }
     }

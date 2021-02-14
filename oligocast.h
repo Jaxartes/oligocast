@@ -34,7 +34,8 @@
 struct oligocast_if {
     /* 
      * Information to identify a network interface.  Not all fields are filled
-     * in on all platforms -- just what's used.
+     * in on all platforms -- just what's used.  'adr' might also not be filled
+     * in if it's unavailable, so if you use it, check for it.
      */
     char            nam[IFNAMSIZ+1];    /* interface name */
     unsigned int    idx;                /* interface index */
@@ -54,11 +55,12 @@ struct oligocast_sml_state {
 /* functions in oligocast_compat.c */
 void identify_interface(char *name, struct oligocast_if *intf,
                         char *errbuf, size_t errlen);
-int setup_mcast_listen(int sok, struct oligocast_if *intf,
-                       struct sockaddr *group, socklen_t grouplen,
+void setup_mcast_listen(int sok, struct oligocast_if *intf,
+                        struct sockaddr *group, socklen_t grouplen,
 #ifdef DO_SOURCES
-                       uint32_t fmode,
-                       int numsrc, struct sockaddr_storage *sources,
+                        uint32_t fmode,
+                        int numsrc, struct sockaddr_storage *sources,
 #endif /* DO_SOURCES */
-                       struct oligocast_sml_state *st);
+                        struct oligocast_sml_state *st,
+                        char *errbuf, size_t errlen);
 
