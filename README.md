@@ -15,9 +15,9 @@ It's meant for use from the Linux command line and similar environments.
 
 Oligocast is open source, free to use and redistribute under a BSD-type license.
 
-At this time, oligocast hasn't been much tested; use with care.  It's
-been tested on Linux; only a little on macOS (and has problems with source
-filtering there); and hasn't been tested at all on *BSD.
+Oligocast has been tested and found to work on Linux.  It's got
+problems on macOS with source filtering, and hasn't been tested
+at all on *BSD.
 
 ## Using
 
@@ -51,14 +51,16 @@ be changed on the fly, by using the "-k" option and then passing new
 ## TODO
 
 There is much to be done on this project:
-* Test on non-Linux platforms.
 * Write a manual page (manpage) for this program.
 * Once a manual page is written, trim down `usage()`, which is way too long,
   down to just a list of options.
+* Fix source filtering on macOS.
+* Test on *BSD.
 * Go through the code for places `errthrottle()` should be used.
 * Maybe #ifdef all the IPv6-specific code, for building on systems
-  where IPv6 multicast is missing or badly broken.  Maybe one for IPv4 too.
+  where IPv6 multicast is missing or badly broken.  Maybe do so for IPv4 too.
 * Potential feature: When receiving a packet, report the source address.
+  Perhaps other details like length, contents.
 * Potential feature: When receiving a packet, optionally
   check its contents against "-d".
 * Potential feature: Make "-i" optional, having it pick an interface for
