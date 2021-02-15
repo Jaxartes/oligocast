@@ -387,10 +387,12 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
     case 'i': /* -i option on command line: specify the network interface */
         if (pc == '?') {
             /* for testing: display interface information */
+            char abuf[16];
             snprintf(errbuf, sizeof(errbuf),
-                     "interface info: name '%s' index %u addr 0x%x",
+                     "interface info: name '%s' index %u v4addr %s",
                      cfg->cfg_intf.nam, (unsigned)cfg->cfg_intf.idx,
-                     (unsigned)cfg->cfg_intf.adr.s_addr);
+                     inet_ntop(AF_INET, &cfg->cfg_intf.adr,
+                               abuf, sizeof(abuf)));
             emit(cfg, reported_event_note, errbuf);
             return(command_action_none);
         }

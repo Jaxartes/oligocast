@@ -16,8 +16,8 @@ It's meant for use from the Linux command line and similar environments.
 Oligocast is open source, free to use and redistribute under a BSD-type license.
 
 At this time, oligocast hasn't been much tested; use with care.  It's
-been tested for basic functioning on Linux; and even less on macOS; and
-hasn't been tested at all on *BSD.
+been tested on Linux; only a little on macOS (and has problems with source
+filtering there); and hasn't been tested at all on *BSD.
 
 ## Using
 
