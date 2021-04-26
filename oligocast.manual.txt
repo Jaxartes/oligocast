@@ -1,0 +1,25 @@
+////
+Here is the documentation ("manpage" structured in "asciidoc" format)
+for the "oligocast" software.  Or will be, once done.  For now it's just
+a stub.
+
+After modifying this file, do "make docs" to build the derived files
+(oligocast.1 and oligocast.manual.html) and deliver them along with it.
+////
+OLIGOCAST(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+oligocast - test tool for IP multicast that can send/receive packets
+
+SYNOPSIS
+--------
+*oligocast* ['OPTIONS']
+
+DESCRIPTION
+-----------
+to be determined: this document is a work in progress
+

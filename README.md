@@ -51,11 +51,11 @@ be changed on the fly, by using the "-k" option and then passing new
 ## TODO
 
 There is much to be done on this project:
-* Write a manual page (manpage) for this program.
+* Write the documentation for this program: see oligocast.manual.txt.
 * Once a manual page is written, trim down `usage()`, which is way too long,
   down to just a list of options.
 * Fix source filtering on macOS.
-* Test on *BSD.
+* Test and get working on *BSD.
 * Go through the code for places `errthrottle()` should be used.
 * Maybe #ifdef all the IPv6-specific code, for building on systems
   where IPv6 multicast is missing or badly broken.  Maybe do so for IPv4 too.
