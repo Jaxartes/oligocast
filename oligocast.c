@@ -236,7 +236,7 @@ static void usage(void)
             "    -P sec -- period between packets in seconds; default 1.0\n");
     if (progdir <= 0) {
         fprintf(stderr,
-            "    -m mult -- multiply packet period to get timeout\n");
+            "    -m mult -- multiply packet period to get timeout; default 3.0\n");
     }
     fprintf(stderr,
             "    -d data -- message data to send:\n"
