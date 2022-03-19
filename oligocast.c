@@ -247,7 +247,8 @@ static void usage(void)
             "    -j -- join the multicast group even when transmitting\n");
     }
     fprintf(stderr,
-            "    -k -- enable reading comments from stdin; see COMMANDS\n");
+            "    -k -- enable reading comments from stdin; see COMMANDS\n"
+            "    -h -- display help message and exit\n");
 
     fprintf(stderr,
             "\n"
@@ -260,9 +261,9 @@ static void usage(void)
             "    #\n"
             "        comment; ignore the whole line\n"
 #ifdef DO_SOURCES
-            "    -E, -I, -v, -l, -f, -P%s, -d\n"
+            "    -E, -I, -v, -l, -f, -P%s, -d, h\n"
 #else
-            "    -v, -l, -f, -P%s, -d\n"
+            "    -v, -l, -f, -P%s, -d, h\n"
 #endif /* DO_SOURCES */
             "        same as the command line options\n"
             "    +v, +k\n"
@@ -525,6 +526,20 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case '.': /* .. no operation (command is echoed) */
+        return(command_action_none);
+
+    case 'h': /* display help (usage) message */
+        if (pc == 0) {
+            /* on command line: display and exit */
+            usage();
+            exit(1);
+        } else if (pc == '-') {
+            /* on stdin: display but don't exit */
+            usage();
+        } else {
+            errout("%ch is not a valid command", (int)pc);
+            return(command_action_error);
+        }
         return(command_action_none);
 
     default:
@@ -1760,7 +1775,7 @@ int main(int argc, char **argv)
     tlast = tnow;
 
     /* parse the command line options */
-    while ((oc = getopt(argc, argv, "trg:p:i:T:E:I:vl:f:P:m:d:jk")) >= 0) {
+    while ((oc = getopt(argc, argv, "trg:p:i:T:E:I:vl:f:P:m:d:jkh")) >= 0) {
         if (oc == '?') {
             errout("unrecognized command line option");
             usage();
@@ -1782,7 +1797,7 @@ int main(int argc, char **argv)
 
     /* sanity checks and adjustments to the configuration */
     if (cfg->cfg_dir == 0) {
-        errout("am I sending or receiving? specify -t or -r");
+        errout("am I sending or receiving? specify -t or -r; or -h for help");
         exit(1);
     }
     if (cfg->cfg_grp.ss_family == AF_UNSPEC) {
