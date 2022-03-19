@@ -158,6 +158,9 @@ static enum command_action source_option(struct config *cfg,
 static enum command_action data_option(struct config *cfg, char *arg);
 static enum command_action format_option(struct config *cfg,
                                          int pc, int oc, char *arg);
+#ifdef DEE_TEST
+static enum command_action dee_test_option(struct config *cfg, char *arg);
+#endif /* DEE_TEST */
 static enum command_action command(struct config *cfg);
 static void progname_to_progdir(void);
 static void errout(char *fmt, ...);
@@ -495,6 +498,11 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
             return(command_action_error);
         }
         return(data_option(cfg, arg));
+
+#ifdef DEE_TEST
+    case 'D': /* -D option or command: debugging/test */
+        return(dee_test_option(cfg, arg));
+#endif /* DEE_TEST */
 
     case 'j': /* -j join multicast group even when sending */
         if (pc != '\0') {
@@ -877,6 +885,54 @@ static enum command_action format_option(struct config *cfg,
         return(command_action_error);
     }
 }
+
+#ifdef DEE_TEST
+/*
+ * dee_test_option()
+ *
+ * Handle a -D command line option, or the same command from stdin.
+ * This is used for debugging and testing, and is only compiled if DEE_TEST
+ * was defined.
+ *
+ * Parameters:
+ *      cfg - configuration structure, where things get stored
+ *      arg - argument string
+ *
+ * Return value:
+ *      What (if any) additional action needs to be taken in response
+ *      to the command.
+ */
+static enum command_action dee_test_option(struct config *cfg, char *arg)
+{
+    int len;
+    uint8_t *data;
+
+    len = atoi(arg);
+    if (len < 1) len = 1;
+    data = calloc(len, 1);
+
+    switch (len) {
+    case 1:
+        /* test -fsanitize=address */
+        data[len] = len;
+        break;
+    case 2:
+        /* test -fsanitize=pointer-subtract */
+        data[0] = (data - (uint8_t *)NULL) & 255;
+        break;
+    case 3:
+        /* test -fsanitize=leak */
+        data = calloc(len, 1);
+        break;
+    default:
+        errout("-D%d not recognized\n", (int)len);
+        break;
+    }
+
+    free(data);
+    return(command_action_none);
+}
+#endif /* DEE_TEST */
 
 /*
  * command()
@@ -1792,7 +1848,12 @@ int main(int argc, char **argv)
     tlast = tnow;
 
     /* parse the command line options */
-    while ((oc = getopt(argc, argv, "trg:p:i:T:E:I:vl:f:P:m:d:jkh")) >= 0) {
+    while ((oc = getopt(argc, argv,
+                        "trg:p:i:T:E:I:vl:f:P:m:d:jkh"
+#ifdef DEE_TEST
+                        "D:"
+#endif
+                        )) >= 0) {
         if (oc == '?') {
             errout("unrecognized command line option");
             usage();
