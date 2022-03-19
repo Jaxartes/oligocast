@@ -156,8 +156,7 @@ static enum command_action option(struct config *cfg,
 static enum command_action source_option(struct config *cfg,
                                          int pc, int oc, char *arg);
 static enum command_action data_option(struct config *cfg, char *arg);
-static enum command_action format_option(struct config *cfg,
-                                         int pc, int oc, char *arg);
+static enum command_action format_option(struct config *cfg, int pc, char *arg);
 #ifdef DEE_TEST
 static enum command_action dee_test_option(struct config *cfg, char *arg);
 #endif /* DEE_TEST */
@@ -464,7 +463,7 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         break;
 
     case 'f': /* -f option or command: formatting settings */
-        return(format_option(cfg, pc, oc, arg));
+        return(format_option(cfg, pc, arg));
 
     case 'P': /* -P option or command: set period */
         if (pc != '-' && pc != '\0') {
@@ -573,7 +572,7 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
  *      cfg - configuration structure, where things get stored
  *      pc - prefix character:
  *          '\0' when called from command line
- *          '-' when called from stdin
+ *          '-' or '?' when called from stdin
  *          other when called wrong
  *      oc - option character: 'I' (include) or 'E' (exclude)
  *      arg - argument string; representing one or more addresses
@@ -836,17 +835,13 @@ static enum command_action data_option(struct config *cfg, char *arg)
  *          '\0' when called from command line
  *          '-' when called from stdin
  *          other when called wrong
- *      oc - option character: 'I' (include) or 'E' (exclude)
- *      arg - argument string; representing one or more addresses
- *          separated by ','; possibly prefixed by '-' or '+' for
- *          deltas; or replaced by '-' for empty list
+ *      arg - argument string
  *
  * Return value:
  *      What (if any) additional action needs to be taken in response
  *      to the command.
  */
-static enum command_action format_option(struct config *cfg,
-                                         int pc, int oc, char *arg)
+static enum command_action format_option(struct config *cfg, int pc, char *arg)
 {
     if (pc != '\0' && pc != '-') {
         errout("%cf is not a valid command", (int)pc);
