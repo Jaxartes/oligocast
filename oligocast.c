@@ -241,7 +241,8 @@ static void usage(void)
     fprintf(stderr,
             "    -d data -- message data to send:\n"
             "        hex:ABCDEF -- some bytes in hexadecimal\n"
-            "        text:abcdef -- some literal text\n");
+            "        text:abcdef -- some literal text\n"
+            "        len:123 -- some number of bytes of made up data\n");
     if (progdir >= 0) {
         fprintf(stderr,
             "    -j -- join the multicast group even when transmitting\n");
@@ -261,9 +262,9 @@ static void usage(void)
             "    #\n"
             "        comment; ignore the whole line\n"
 #ifdef DO_SOURCES
-            "    -E, -I, -v, -l, -f, -P%s, -d, h\n"
+            "    -E, -I, -v, -l, -f, -P%s, -d, -h\n"
 #else
-            "    -v, -l, -f, -P%s, -d, h\n"
+            "    -v, -l, -f, -P%s, -d, -h\n"
 #endif /* DO_SOURCES */
             "        same as the command line options\n"
             "    +v, +k\n"
@@ -753,7 +754,8 @@ static enum command_action data_option(struct config *cfg, char *arg)
 {
     uint8_t *data;
     int len, i, o, ib;
-    char *s;
+    char *s, *ep;
+    long l;
 
     if (!strncmp(arg, "hex:", 4)) {
         /* hexadecimal; example "hex:68656c6c6f" */
@@ -785,6 +787,21 @@ static enum command_action data_option(struct config *cfg, char *arg)
         s = strdup(arg + 5);
         len = strlen(s);
         data = (void *)s;
+    } else if (!strncmp(arg, "len:", 4)) {
+        /* by length: make up that many bytes */
+
+        ep = NULL;
+        l = strtol(arg + 4, &ep, 0);
+        if (l < 0 || l > 100000 || (ep && *ep)) {
+            errout("Length with '-d len:' option must be integer 1-100000");
+            return(command_action_error);
+        } else {
+            len = l;
+            data = calloc(len, 1);
+            for (i = 0; i < len; ++i) {
+                data[i] = (i + 1) & 255;
+            }
+        }
     } else {
         errout("Unrecognized format in -d option");
         return(command_action_error);
