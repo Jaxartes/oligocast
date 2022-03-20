@@ -196,7 +196,7 @@ while o < numops:
 
 print(".x", file= stdout)
 print("received command for x .x", file= stderr)
-#print("exiting on command", file= stderr)
+print("exiting on command", file= stderr)
 
 exit(0)
 
