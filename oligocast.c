@@ -902,14 +902,18 @@ static enum command_action format_option(struct config *cfg, int pc, char *arg)
  */
 static enum command_action dee_test_option(struct config *cfg, char *arg)
 {
-    int len;
+    int cmd = 0, pos = 0, len;
     uint8_t *data;
 
-    len = atoi(arg);
+    if (sscanf(arg, "%d %n", &cmd, &pos) < 1) {
+        errout("-D syntax error");
+        return(command_action_none);
+    }
+    len = cmd;
     if (len < 1) len = 1;
     data = calloc(len, 1);
 
-    switch (len) {
+    switch (cmd) {
     case 1:
         /* test -fsanitize=address */
         data[len] = len;
@@ -922,8 +926,39 @@ static enum command_action dee_test_option(struct config *cfg, char *arg)
         /* test -fsanitize=leak */
         data = calloc(len, 1);
         break;
+    case 4:
+        /* test -fsanitize=shift*; takes base & exponent */
+        {
+            int b = 0, e = 0, ls, rs;
+            unsigned lu, ru;
+            sscanf(arg + pos, "%d %d", &b, &e);
+            ls = b << e;
+            rs = b >> e;
+            lu = ((unsigned)b) << e;
+            ru = ((unsigned)b) >> e;
+            errout("-D4 %d %d -> %d %d %u %u", b, e, ls, rs, lu, ru);
+        }
+        break;
+    case 5:
+        /*
+         * Test -fsanitize=integer-divide-by-zero &
+         * -fsanitize=signed-integer-overflow; takes integers a, b, c and
+         * computes the following:
+         *      (a / b) + c
+         *      (a % b) + c
+         *      (a * b) + c
+         */
+        {
+            int a = 0, b = 0, c = 0, d, e, f;
+            sscanf(arg + pos, "%d %d %d", &a, &b, &c);
+            d = (a / b) + c;
+            e = (a % b) + c;
+            f = (a * b) + c;
+            errout("-D5 %d %d %d -> %d %d %d", a, b, c, d, e, f);
+        }
+        break;
     default:
-        errout("-D%d not recognized\n", (int)len);
+        errout("-D%d not recognized", (int)len);
         break;
     }
 

@@ -16,7 +16,7 @@ SANFLAGS=
 
 #SANFLAGS+=-fsanitize=leak
 
-#SANFLAGS+=-fsanitize=undefined
+#SANFLAGS+=-fsanitize=undefined # seems to enable the suboptions below
 #SANFLAGS+=-fsanitize=shift
 #SANFLAGS+=-fsanitize=shift-exponent
 #SANFLAGS+=-fsanitize=shift-base
