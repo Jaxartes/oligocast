@@ -24,6 +24,7 @@ static const char License[] =
 "ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE \n"
 "POSSIBILITY OF SUCH DAMAGE.                                                \n"
 "\n";
+static const char Version[] = "1.0.dev";
 
 /*
  * "oligocast" is a test program for IP multicast (IPv4 and IPv6).  It's
@@ -202,8 +203,9 @@ static void usage(void)
 {
     fprintf(stderr,
             "USAGE: %s options...\n"
+            "VERSION: %s\n"
             "OPTIONS:\n",
-            progname);
+            progname, Version);
     if (progdir == 0) {
         fprintf(stderr,
             "    -t -- transmit (send)\n"
@@ -543,6 +545,9 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
         if (pc == 0) {
             /* on command line: display and exit */
             usage();
+            if (cfg->cfg_verbose > 1) {
+                fprintf(stderr, "Version: %s\n", Version);
+            }
             exit(1);
         } else if (pc == '-') {
             /* on stdin: display but don't exit */
