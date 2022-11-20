@@ -24,7 +24,7 @@ static const char License[] =
 "ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE \n"
 "POSSIBILITY OF SUCH DAMAGE.                                                \n"
 "\n";
-static const char Version[] = "1.0.dev";
+static const char Version[] = "1.1";
 
 /*
  * "oligocast" is a test program for IP multicast (IPv4 and IPv6).  It's
