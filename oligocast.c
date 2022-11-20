@@ -160,7 +160,7 @@ enum command_action {
     command_action_time_change,         /* period/multiplier/timeout changed */
 };
 
-static void usage(void);
+static void usage(FILE *fp);
 static enum command_action option(struct config *cfg,
                                   int pc, int oc, char *arg);
 static enum command_action source_option(struct config *cfg,
@@ -208,36 +208,37 @@ static void *timestamp_formatter_arg = NULL;
 
 /*
  * usage()
- * Display a help message.
+ * Display a help message. 'fp' should be 'stdout' if the usage message was
+ * requested (with -h), and 'stderr' if it was due to some kind of error.
  */
-static void usage(void)
+static void usage(FILE *fp)
 {
-    fprintf(stderr,
+    fprintf(fp,
             "USAGE: %s options...\n"
             "VERSION: %s\n"
             "OPTIONS:\n",
             progname, Version);
     if (progdir == 0) {
-        fprintf(stderr,
+        fprintf(fp,
             "    -t -- transmit (send)\n"
             "    -r -- receive\n");
     }
-    fprintf(stderr,
+    fprintf(fp,
             "    -g grp -- multicast group address to listen to\n"
             "    -p port -- UDP port number to use\n"
             "    -i iface -- name of network interface to use\n");
     if (progdir >= 0) {
-        fprintf(stderr,
+        fprintf(fp,
             "    -T ttl -- time to live / hop limit value to use;\n"
             "              \"-\" for system default; default %d\n",
             (int)DEF_TTL);
     }
 #ifdef DO_SOURCES
-    fprintf(stderr,
+    fprintf(fp,
             "    -E addr(s) -- exclude addrs; see SOURCES\n"
             "    -I addr(s) -- include addrs; see SOURCES\n");
 #endif /* DO_SOURCES */
-    fprintf(stderr,
+    fprintf(fp,
             "    -v -- verbose mode: report each packet send/received\n"
             "    -l label -- include label string in output\n"
             "    -f formopt -- formatting option for output:\n"
@@ -250,10 +251,10 @@ static void usage(void)
             "        -f notime -- no timestamps\n"
             "    -P sec -- period between packets in seconds; default 1.0\n");
     if (progdir <= 0) {
-        fprintf(stderr,
+        fprintf(fp,
             "    -m mult -- multiply packet period to get timeout; default 3.0\n");
     }
-    fprintf(stderr,
+    fprintf(fp,
             "    -d data -- message data, %s:\n"
             "        hex:ABCDEF -- some bytes in hexadecimal\n"
             "        text:abcdef -- some literal text\n"
@@ -262,14 +263,14 @@ static void usage(void)
              ((progdir < 0) ? "to expect to receive" :
                               "to send")));
     if (progdir >= 0) {
-        fprintf(stderr,
+        fprintf(fp,
             "    -j -- join the multicast group even when transmitting\n");
     }
-    fprintf(stderr,
+    fprintf(fp,
             "    -k -- enable reading comments from stdin; see COMMANDS\n"
             "    -h -- display help message and exit\n");
 
-    fprintf(stderr,
+    fprintf(fp,
             "\n"
             "COMMANDS:\n"
             "    With the -k option, this program can take commands on stdin.\n"
@@ -296,7 +297,7 @@ static void usage(void)
             (progdir <= 0) ? ", -m" : "");
 
 #ifdef DO_SOURCES
-    fprintf(stderr,
+    fprintf(fp,
             "\n"
             "SOURCES:\n"
             "    The -E and -I options (and the -E and -I commands)\n"
@@ -320,6 +321,7 @@ static void usage(void)
             "        \"+\" or \"-\" to add to (or subtract from) the existing\n"
             "        list instead of replacing it.\n");
 #endif /* DO_SOURCES */
+    fflush(fp);
 }
 
 /*
@@ -554,18 +556,18 @@ static enum command_action option(struct config *cfg, int pc, int oc, char *arg)
 
     case 'h': /* display help (usage) message */
         if (cfg->cfg_verbose > 1) {
-            fputs(License, stderr);
+            fputs(License, stdout);
         }
         if (pc == 0) {
             /* on command line: display and exit */
-            usage();
+            usage(stdout);
             if (cfg->cfg_verbose > 1) {
-                fprintf(stderr, "Version: %s\n", Version);
+                printf("Version: %s\n", Version);
             }
             exit(1);
         } else if (pc == '-') {
             /* on stdin: display but don't exit */
-            usage();
+            usage(stdout);
         } else {
             errout("%ch is not a valid command", (int)pc);
             return(command_action_error);
@@ -1923,7 +1925,7 @@ int main(int argc, char **argv)
                         )) >= 0) {
         if (oc == '?') {
             errout("unrecognized command line option");
-            usage();
+            usage(stderr);
             exit(1);
         } else {
             empty[0] = '\0';
@@ -1935,7 +1937,7 @@ int main(int argc, char **argv)
     }
     if (optind != argc) {
         errout("too many arguments");
-        usage();
+        usage(stderr);
         exit(1);
     }
     recompute_timeout = reapply_filter = filter_critical = 1;
