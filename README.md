@@ -61,7 +61,5 @@ There is much to be done on this project:
   where IPv6 multicast is missing or badly broken.  Maybe do so for IPv4 too.
 * Potential feature: When receiving a packet, report the source address.
   Perhaps other details like length, contents.
-* Potential feature: When receiving a packet, optionally
-  check its contents against "-d".
 * Potential feature: Make "-i" optional, having it pick an interface for
   itself if none is specified.

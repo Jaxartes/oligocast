@@ -88,10 +88,17 @@ enum reported_events {
     reported_event_dn,                  /* time out, no packet received */
     reported_event_cmd,                 /* command received and handled */
     reported_event_note,                /* informational note */
+    reported_event_pkt,                 /* something about received packet */
 };
 
 struct config {
-    /* Configuration settings, combined in one more or less handy package. */
+    /*
+     * Configuration settings, combined in one more or less handy package.
+     * And some other stuff, live state rather than "configuration," that
+     * is put here for convenience.
+     *
+     * Passed around from one function to another.
+     */
 
     int                     cfg_dir;        /* direction: TX >0, RX <0 */
     int                     cfg_af;         /* address family (inferred) */
@@ -128,6 +135,8 @@ struct config {
     long                    cfg_timeout_us; /* microseconds timeout */
     uint8_t *               cfg_data;       /* data to send */
     size_t                  cfg_data_len;   /* number of bytes in cfg_data */
+    int                     cfg_data_chk;   /* check data in received packet */
+    uint8_t *               cfg_data_rx;    /* data in received packet */
     int                     cfg_join;       /* join even when transmitting */
     int                     cfg_command_in; /* allow commands on stdin */
     char                    cfg_command_buf[4096]; /* partial commands read */
@@ -195,6 +204,8 @@ static int (*timestamp_formatter)(struct timeval *, char *, size_t, void *) =
     timestamp_log;
 static void *timestamp_formatter_arg = NULL;
 
+#define RX_EXTRA 512 /* how much larger cfg_data_rx is than cfg_data_len says */
+
 /*
  * usage()
  * Display a help message.
@@ -243,10 +254,13 @@ static void usage(void)
             "    -m mult -- multiply packet period to get timeout; default 3.0\n");
     }
     fprintf(stderr,
-            "    -d data -- message data to send:\n"
+            "    -d data -- message data, %s:\n"
             "        hex:ABCDEF -- some bytes in hexadecimal\n"
             "        text:abcdef -- some literal text\n"
-            "        len:123 -- some number of bytes of made up data\n");
+            "        len:123 -- some number of bytes of made up data\n",
+            ((progdir == 0) ? "to send, or to expect to receive" :
+             ((progdir < 0) ? "to expect to receive" :
+                              "to send")));
     if (progdir >= 0) {
         fprintf(stderr,
             "    -j -- join the multicast group even when transmitting\n");
@@ -767,8 +781,8 @@ static enum command_action source_option(struct config *cfg,
  */
 static enum command_action data_option(struct config *cfg, char *arg)
 {
-    uint8_t *data;
-    int len, i, o, ib;
+    uint8_t *data = NULL;
+    int len = 0, i, o, ib, chk = 0;
     char *s, *ep;
     long l;
 
@@ -797,11 +811,13 @@ static enum command_action data_option(struct config *cfg, char *arg)
                 return(command_action_error);
             }
         }
+        chk = 1; /* check contents of received packets */
     } else if (!strncmp(arg, "text:", 5)) {
         /* plain text: just copy it */
         s = strdup(arg + 5);
         len = strlen(s);
         data = (void *)s;
+        chk = 1; /* check contents of received packets */
     } else if (!strncmp(arg, "len:", 4)) {
         /* by length: make up that many bytes */
 
@@ -817,17 +833,24 @@ static enum command_action data_option(struct config *cfg, char *arg)
                 data[i] = (i + 1) & 255;
             }
         }
+        chk = 1; /* check contents of received packets */
     } else {
         errout("Unrecognized format in -d option");
         return(command_action_error);
     }
 
-    /* store the result */
+    /* store the result and update buffers */
     if (cfg->cfg_data) {
         free(cfg->cfg_data);
     }
+    if (cfg->cfg_data_rx) {
+        free(cfg->cfg_data_rx);
+    }
     cfg->cfg_data = data;
     cfg->cfg_data_len = len;
+    cfg->cfg_data_chk = chk;
+    cfg->cfg_data_rx = malloc(len + RX_EXTRA);
+
     return(command_action_none);
 }
 
@@ -1342,6 +1365,11 @@ static void emit(struct config *cfg, enum reported_events evt, char *extra)
         ekw = "note";
         eph = "note:";
         break;
+    case reported_event_pkt:
+        /* something about a packet we received */
+        ekw = "pkt";
+        eph = "for packet on";
+        break;
     default:
         /* unknown event, don't report it */
         return;
@@ -1825,7 +1853,6 @@ int main(int argc, char **argv)
     int rx_state_up = 0;
     enum command_action ca;
     char empty[1], errbuf[256];
-    uint32_t rxpkt[512];
     struct sockaddr_storage as, dsta;
     struct sockaddr_in *a4;
     struct sockaddr_in6 *a6;
@@ -1868,6 +1895,8 @@ int main(int argc, char **argv)
     main_cfg.cfg_timeout_us = 3000000;
     main_cfg.cfg_data = NULL;
     main_cfg.cfg_data_len = 0;
+    main_cfg.cfg_data_chk = 0;
+    main_cfg.cfg_data_rx = NULL;
     main_cfg.cfg_join = 0;
     main_cfg.cfg_command_in = 0;
     main_cfg.cfg_command_got = 0;
@@ -2088,6 +2117,7 @@ int main(int argc, char **argv)
         ((uint32_t *)cfg->cfg_data)[0] = htonl(tnow.tv_sec);
         ((uint32_t *)cfg->cfg_data)[1] = htonl(tnow.tv_usec);
         cfg->cfg_data_len = 8;
+        cfg->cfg_data_rx = malloc(cfg->cfg_data_len + RX_EXTRA);
     }
 
     /* main loop, where stuff actually happens */
@@ -2271,7 +2301,8 @@ int main(int argc, char **argv)
                 }
             } else if (cfg->cfg_dir < 0 && FD_ISSET(sok, &rfds)) {
                 /* receive a packet */
-                rv = recv(sok, rxpkt, sizeof(rxpkt), 0);
+                rv = recv(sok, cfg->cfg_data_rx,
+                          cfg->cfg_data_len + RX_EXTRA, 0);
                 if (rv < 0) {
                     /* packet not received */
                     if (errno == EAGAIN || errno == EWOULDBLOCK ||
@@ -2285,6 +2316,15 @@ int main(int argc, char **argv)
                     /* packet received */
                     gettimeofday(&tlast, NULL);
                     emit(cfg, reported_event_rx, NULL);
+                    if (cfg->cfg_data_chk) {
+                        /* what did we get? */
+                        if (rv != cfg->cfg_data_len ||
+                            memcmp(cfg->cfg_data_rx, cfg->cfg_data, rv) != 0) {
+
+                            emit(cfg, reported_event_pkt,
+                                 "contents do not match '-d' option");
+                        }
+                    }
                     if (!rx_state_up) {
                         rx_state_up = 1;
                         emit(cfg, reported_event_up, NULL);

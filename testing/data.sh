@@ -6,6 +6,9 @@ oligocast=./oligocast
 iface=wlan0
 port=11011
 group=226.2.2.6
+rxtx=t
+
+if [ "x$1" = "xrx" ] ; then rxtx=r ; fi # option to receive instead of send
 
 (
     sleep 0.5
@@ -18,4 +21,4 @@ group=226.2.2.6
         sleep 3
     done
     echo .x
-) | $oligocast -vtki$iface -g$group -p$port
+) | $oligocast -v${rxtx}ki$iface -g$group -p$port
